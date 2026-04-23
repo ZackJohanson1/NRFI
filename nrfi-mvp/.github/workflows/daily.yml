@@ -1,0 +1,71 @@
+name: Build NRFI Daily Slate
+
+on:
+  schedule:
+    # 11:00 UTC = 7:00 AM ET (EDT) / 6:00 AM ET (EST)
+    # During DST (March-Nov): runs at 7 AM ET
+    - cron: "0 11 * * *"
+    # 13:00 UTC = 9:00 AM ET — grades yesterday's picks
+    - cron: "0 13 * * *"
+  workflow_dispatch:  # allow manual runs
+    inputs:
+      date:
+        description: "Override slate date (YYYY-MM-DD)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 11 * * *' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build slate
+        env:
+          OPENWEATHERMAP_API_KEY: ${{ secrets.OPENWEATHERMAP_API_KEY }}
+          SLATE_DATE: ${{ github.event.inputs.date }}
+        run: python scripts/build_slate.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ data/
+          git diff --staged --quiet || git commit -m "Build slate $(date -u +%Y-%m-%d)"
+          git push
+
+  track:
+    runs-on: ubuntu-latest
+    if: github.event.schedule == '0 13 * * *'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Grade yesterday's picks
+        run: python scripts/track_results.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/results.json
+          git diff --staged --quiet || git commit -m "Grade picks $(date -u +%Y-%m-%d)"
+          git push

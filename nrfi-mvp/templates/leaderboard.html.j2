@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NRFI Daily · {{ date }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#0B6B45;--green-bg:#E8F5EF;
+  --blue:#1A4FA8;--blue-bg:#EAF0FB;
+  --amber:#A05F00;--amber-bg:#FEF3E2;
+  --red:#B02020;--red-bg:#FDEAEA;
+  --bg:#F7F7F5;--card:#FFFFFF;--border:#E8E8E4;--border2:#F0F0EC;
+  --text1:#111110;--text2:#555550;--text3:#999990;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+body{background:var(--bg);font-family:var(--sans);color:var(--text1);padding:16px;max-width:720px;margin:0 auto;min-height:100vh}
+header{margin-bottom:20px}
+header h1{font-size:22px;font-weight:600;letter-spacing:-0.5px;margin-bottom:3px}
+header p{font-size:13px;color:var(--text2)}
+.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.src{display:inline-flex;align-items:center;gap:5px;background:var(--green-bg);color:var(--green);font-size:11px;font-weight:500;padding:3px 9px;border-radius:4px;font-family:var(--mono)}
+.updated{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;margin-top:14px}
+.li{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.ld{width:8px;height:8px;border-radius:50%}
+.board{display:flex;flex-direction:column;gap:8px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .12s}
+.card:hover{border-color:#C0C0B8}
+.top{display:grid;grid-template-columns:32px 1fr auto;align-items:center;gap:12px;padding:12px 14px}
+.rank{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--text3);text-align:center}
+.rank.hi{color:var(--green)}
+.teams{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.team{font-size:14px;font-weight:600}
+.at{font-size:11px;color:var(--text3)}
+.pitchers{font-size:11px;color:var(--text2);margin-bottom:2px;display:flex;gap:8px;flex-wrap:wrap}
+.sp-badge{font-size:9px;font-weight:600;background:var(--border2);color:var(--text3);padding:1px 4px;border-radius:3px;margin-right:3px;font-family:var(--mono)}
+.gametime{font-size:10px;color:var(--text3)}
+.score-wrap{text-align:right}
+.pct{font-size:26px;font-weight:600;line-height:1;font-family:var(--mono);letter-spacing:-1px}
+.pct.strong-nrfi{color:var(--green)}
+.pct.lean-nrfi{color:var(--blue)}
+.pct.tossup{color:var(--amber)}
+.pct.yrfi{color:var(--red)}
+.pill{display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;margin-top:4px;letter-spacing:.02em}
+.pill.strong-nrfi{background:var(--green-bg);color:var(--green)}
+.pill.lean-nrfi{background:var(--blue-bg);color:var(--blue)}
+.pill.tossup{background:var(--amber-bg);color:var(--amber)}
+.pill.yrfi{background:var(--red-bg);color:var(--red)}
+.bar{height:3px;background:var(--border2)}
+.bar-fill{height:100%}
+.edge{display:inline-block;font-size:10px;font-family:var(--mono);margin-top:2px;color:var(--text3)}
+.edge.positive{color:var(--green)}
+.edge.negative{color:var(--red)}
+footer{margin-top:30px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);text-align:center;font-family:var(--mono)}
+footer a{color:var(--text2)}
+</style>
+</head>
+<body>
+<header>
+  <h1>NRFI Daily</h1>
+  <p>{{ date }} · {{ slate|length }} games on the slate</p>
+  <div class="meta">
+    <span class="src">✓ MLB Stats API · TeamRankings · OpenWeatherMap</span>
+    <span class="updated">Updated {{ generated_at }}</span>
+  </div>
+</header>
+
+<div class="legend">
+  <span class="li"><span class="ld" style="background:var(--green)"></span>65%+ Strong NRFI</span>
+  <span class="li"><span class="ld" style="background:var(--blue)"></span>55–65% Lean NRFI</span>
+  <span class="li"><span class="ld" style="background:var(--amber)"></span>45–55% Toss-up</span>
+  <span class="li"><span class="ld" style="background:var(--red)"></span>&lt;45% Lean YRFI</span>
+</div>
+
+<div class="board">
+{% for g in slate %}
+  <div class="card">
+    <div class="top">
+      <div class="rank{% if loop.index0 < 3 %} hi{% endif %}">{{ loop.index }}</div>
+      <div>
+        <div class="teams"><span class="team">{{ g.away }}</span><span class="at">@</span><span class="team">{{ g.home }}</span></div>
+        <div class="pitchers">
+          <span><span class="sp-badge">SP</span>{{ g.away_sp }}</span>
+          <span><span class="sp-badge">SP</span>{{ g.home_sp }}</span>
+        </div>
+        <div class="gametime">{{ g.venue }}</div>
+      </div>
+      <div class="score-wrap">
+        <div class="pct {{ g.css }}">{{ g.nrfi_pct|round|int }}%</div>
+        <span class="pill {{ g.css }}">{{ g.label }}</span>
+        {% if g.edge is not none %}
+          <div class="edge {% if g.edge > 0 %}positive{% elif g.edge < 0 %}negative{% endif %}">
+            {% if g.edge > 0 %}+{% endif %}{{ g.edge }} vs FD
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="bar">
+      <div class="bar-fill" style="width:{{ g.nrfi_pct|round|int }}%;
+        background:{% if g.css == 'strong-nrfi' %}var(--green){% elif g.css == 'lean-nrfi' %}var(--blue){% elif g.css == 'tossup' %}var(--amber){% else %}var(--red){% endif %}"></div>
+    </div>
+  </div>
+{% endfor %}
+</div>
+
+<footer>
+  <p>Not financial advice · <a href="results.json">Track record</a> · Bet responsibly</p>
+</footer>
+</body>
+</html>
